@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: geosafe-postgres
+    environment:
+      POSTGRES_DB: geosafe
+      POSTGRES_USER: geosafe
+      POSTGRES_PASSWORD: geosafe123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geosafe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: geosafe-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://geosafe:geosafe123@postgres:5432/geosafe"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: "geosafe-secret-key-2024"
+      ENCRYPTION_KEY: "geosafe-encryption-key-32-chars"
+      ADMIN_EMAIL: "admin@geosafe.com"
+      ADMIN_PASSWORD: "admin123"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npx prisma db push && pnpm dev"
+
+volumes:
+  postgres_data:
