@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MapPin, Download, Shield, AlertCircle, File } from "lucide-react";
 import MapWrapper from "@/components/map/MapWrapper";
+import Navbar from "@/components/navigation/Navbar";
 
 interface AccessibleFile {
   id: string;
@@ -159,31 +160,17 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-[#1E3A8A]" />
-            <h1 className="text-2xl font-bold text-[#1E3A8A]">GeoSafe User</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Welcome, {session.user?.name}</span>
-            <Button variant="outline" onClick={() => router.push("/api/auth/signout")}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Files</h2>
+      <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+        <div className="mb-6 lg:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Your Files</h2>
           <p className="text-gray-600">Access your files when you're in a safe zone</p>
         </div>
 
         {/* Location Status */}
-        <Card className="mb-6">
+        <Card className="mb-4 lg:mb-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MapPin className="h-5 w-5" />
@@ -292,8 +279,8 @@ export default function UserDashboard() {
         </div>
 
         {/* Map View */}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Your Location & Safe Zones</h3>
+        <div className="mt-6 lg:mt-8">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4">Your Location & Safe Zones</h3>
           <Card>
             <CardHeader>
               <CardTitle>Location Map</CardTitle>
@@ -308,15 +295,17 @@ export default function UserDashboard() {
                     Click the location button on the map to get your current position
                   </p>
                 </div>
-                <MapWrapper 
-                  safeZones={[]} // We'll need to fetch safe zones for display
-                  userLocation={userLocation}
-                  showCurrentLocation={false} // Disable auto-location detection
-                  onLocationDetected={(lat, lng) => {
-                    setUserLocation({ lat, lng });
-                    fetchAccessibleFiles(lat, lng);
-                  }}
-                />
+                <div className="h-80 sm:h-96">
+                  <MapWrapper 
+                    safeZones={[]} // We'll need to fetch safe zones for display
+                    userLocation={userLocation}
+                    showCurrentLocation={false} // Disable auto-location detection
+                    onLocationDetected={(lat, lng) => {
+                      setUserLocation({ lat, lng });
+                      fetchAccessibleFiles(lat, lng);
+                    }}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

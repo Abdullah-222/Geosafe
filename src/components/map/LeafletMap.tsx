@@ -159,6 +159,47 @@ export default function LeafletMap({
           centerMarker.bindPopup(popupContent);
         });
 
+        // Add selected zone if it exists (for admin mode)
+        if (selectedZone && isAdmin) {
+          console.log('Adding selected zone marker:', selectedZone);
+          
+          const selectedMarker = L.marker([selectedZone.latitude, selectedZone.longitude], {
+            icon: L.divIcon({
+              className: 'selected-zone-marker',
+              html: `
+                <div style="
+                  background-color: #1E3A8A;
+                  color: white;
+                  width: 40px;
+                  height: 40px;
+                  border-radius: 50%;
+                  border: 4px solid white;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  font-size: 18px;
+                  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.4);
+                  z-index: 1000;
+                ">📍</div>
+              `,
+              iconSize: [40, 40],
+              iconAnchor: [20, 20]
+            })
+          }).addTo(map);
+
+          const selectedCircle = L.circle([selectedZone.latitude, selectedZone.longitude], {
+            color: '#1E3A8A',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.2,
+            weight: 2,
+            radius: selectedZone.radius,
+            className: 'selected-zone-circle'
+          }).addTo(map);
+
+          console.log('Selected zone marker and circle added');
+        }
+
         // Add user location marker
         if (userLocation) {
           const userMarker = L.marker([userLocation.lat, userLocation.lng]).addTo(map);
@@ -199,12 +240,15 @@ export default function LeafletMap({
           map.on('click', (e: any) => {
             const { lat, lng } = e.latlng;
             console.log('Map clicked:', lat, lng);
+            console.log('Calling onLocationSelect with:', lat, lng);
             
             // Remove previous markers if they exist
             if (currentMarker) {
+              console.log('Removing previous marker');
               map.removeLayer(currentMarker);
             }
             if (currentCircle) {
+              console.log('Removing previous circle');
               map.removeLayer(currentCircle);
             }
             
@@ -216,22 +260,25 @@ export default function LeafletMap({
                   <div style="
                     background-color: #1E3A8A;
                     color: white;
-                    width: 30px;
-                    height: 30px;
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50%;
-                    border: 3px solid white;
+                    border: 4px solid white;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: bold;
-                    font-size: 16px;
-                    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.4);
+                    font-size: 18px;
+                    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.4);
+                    z-index: 1000;
                   ">📍</div>
                 `,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
               })
             }).addTo(map);
+            
+            console.log('Added marker to map');
             
             // Add a circle to show the radius preview
             const radius = 100; // Default radius for preview
@@ -243,7 +290,14 @@ export default function LeafletMap({
               radius: radius
             }).addTo(map);
             
+            console.log('Added circle to map');
+            
+            // Store references in the map instance for persistence
+            map._selectedMarker = currentMarker;
+            map._selectedCircle = currentCircle;
+            
             // Call the location select callback
+            console.log('Calling onLocationSelect callback');
             onLocationSelect(lat, lng);
           });
           
@@ -272,11 +326,73 @@ export default function LeafletMap({
         mapInstanceRef.current = null;
       }
     };
-  }, [isClient, mapCenter, safeZones, userLocation, currentLocation, isAdmin, onLocationSelect, selectedZone]);
+  }, [isClient, mapCenter, safeZones, userLocation, currentLocation, isAdmin, onLocationSelect]);
+
+  // Handle current location updates without reinitializing the map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !currentLocation) return;
+
+    const updateCurrentLocation = async () => {
+      try {
+        const L = await import('leaflet');
+        
+        // Remove any existing current location markers
+        mapInstanceRef.current.eachLayer((layer: any) => {
+          if (layer.options && layer.options.className === 'current-location-marker') {
+            mapInstanceRef.current.removeLayer(layer);
+          }
+        });
+
+        // Add current location marker
+        const currentMarker = L.marker([currentLocation.lat, currentLocation.lng], {
+          icon: L.divIcon({
+            className: 'current-location-marker',
+            html: `
+              <div style="
+                background-color: #10b981;
+                color: white;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                border: 3px solid white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+              ">📍</div>
+            `,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        }).addTo(mapInstanceRef.current);
+
+        currentMarker.bindPopup(`
+          <div class="p-2">
+            <h3 class="font-semibold text-lg text-green-600">📍 Current Location</h3>
+            <p class="text-sm text-gray-600">
+              ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+              Detected at ${new Date().toLocaleTimeString()}
+            </p>
+          </div>
+        `);
+
+        console.log('Current location marker added');
+      } catch (error) {
+        console.error('Failed to update current location:', error);
+      }
+    };
+
+    updateCurrentLocation();
+  }, [currentLocation]);
 
   const handleLocationDetected = (lat: number, lng: number) => {
     setCurrentLocation({ lat, lng });
     setIsLocating(false);
+    // Always update map center to show the detected location
     setMapCenter([lat, lng]);
     onLocationDetected?.(lat, lng);
   };
@@ -352,7 +468,7 @@ export default function LeafletMap({
 
       {/* Location Status Indicator */}
       {currentLocation && (
-        <div className="absolute top-4 left-4 z-[1000] bg-green-100 border border-green-300 rounded-lg p-3 shadow-lg">
+        <div className="absolute top-16 left-4 z-[1000] bg-green-100 border border-green-300 rounded-lg p-3 shadow-lg">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm font-medium text-green-800">Location Found</span>

@@ -27,7 +27,9 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
 
   const handleLocationSelect = (lat: number, lng: number) => {
     console.log('Location selected in dialog:', lat, lng);
+    console.log('Setting selectedLocation state');
     setSelectedLocation({ lat, lng });
+    console.log('selectedLocation state updated');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,21 +89,20 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
           Create Safe Zone
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl w-[90vw] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-[100vw] w-[95vw] h-[90vh] max-h-[80vh] sm:max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Create Safe Zone</DialogTitle>
           <DialogDescription>
             Click on the map to select the center of your safe zone, then configure the details.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Map */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Select Location</h3>
-            <div className="h-96">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 flex-1 overflow-hidden min-h-0">
+          {/* Map - Takes 2/3 of the space on desktop */}
+          <div className="xl:col-span-2 space-y-2 sm:space-y-4 h-full flex flex-col">
+            <h3 className="text-base sm:text-lg font-semibold">Select Location</h3>
+            <div className="flex-1 min-h-[300px] sm:min-h-[400px]">
               <MapWrapper
-                key={`${selectedLocation?.lat}-${selectedLocation?.lng}-${formData.radius}`}
                 safeZones={[]}
                 onLocationSelect={handleLocationSelect}
                 isAdmin={true}
@@ -123,34 +124,36 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
             )}
           </div>
 
-          {/* Form */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Zone Details</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Zone Name *</Label>
+          {/* Form - Takes 1/3 of the space on desktop */}
+          <div className="space-y-3 sm:space-y-4 overflow-x-hidden sm:overflow-y-visible mobile-scrollbar h-full flex flex-col">
+            <h3 className="text-base sm:text-lg font-semibold">Zone Details</h3>
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 flex-1 flex flex-col">
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="name" className="text-sm sm:text-base">Zone Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Office Building"
                   required
+                  className="text-sm sm:text-base"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="description" className="text-sm sm:text-base">Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Optional description of the safe zone"
-                  rows={3}
+                  rows={2}
+                  className="text-sm sm:text-base"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="radius">Radius (meters) *</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="radius" className="text-sm sm:text-base">Radius (meters) *</Label>
                 <Input
                   id="radius"
                   type="number"
@@ -160,6 +163,7 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
                   min="10"
                   max="10000"
                   required
+                  className="text-sm sm:text-base"
                 />
                 <p className="text-xs text-gray-500">
                   The radius in meters around the selected point. The circle on the map will update as you type.
@@ -171,10 +175,10 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
                 )}
               </div>
 
-              <div className="flex space-x-2 pt-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4 mt-auto">
                 <Button
                   type="submit"
-                  className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                  className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-sm sm:text-base"
                   disabled={!selectedLocation || isLoading}
                 >
                   {isLoading ? "Creating..." : "Create Zone"}
@@ -183,6 +187,7 @@ export default function CreateSafeZoneDialog({ onZoneCreated }: CreateSafeZoneDi
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
+                  className="text-sm sm:text-base"
                 >
                   Cancel
                 </Button>

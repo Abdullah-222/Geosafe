@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import Navbar from "@/components/navigation/Navbar";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -46,17 +47,19 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Shield className="h-12 w-12 text-[#1E3A8A]" />
-          </div>
-          <CardTitle className="text-2xl">Sign In to GeoSafe</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Navbar />
+      <div className="flex items-center justify-center py-8 sm:py-12 lg:py-16 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-[#1E3A8A]" />
+            </div>
+            <CardTitle className="text-xl sm:text-2xl">Sign In to GeoSafe</CardTitle>
+            <CardDescription>
+              Enter your credentials to access your account
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -99,6 +102,7 @@ export default function SignIn() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

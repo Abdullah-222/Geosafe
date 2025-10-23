@@ -12,7 +12,9 @@ import { Users, MapPin, Upload, Shield, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import CreateSafeZoneDialog from "@/components/admin/CreateSafeZoneDialog";
 import FileUploadDialog from "@/components/admin/FileUploadDialog";
+import EditUserDialog from "@/components/admin/EditUserDialog";
 import MapWrapper from "@/components/map/MapWrapper";
+import Navbar from "@/components/navigation/Navbar";
 
 interface SafeZone {
   id: string;
@@ -120,6 +122,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+      
+      if (response.ok) {
+        setUsers(users.filter(user => user.id !== userId));
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user");
+    }
+  };
+
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -137,46 +160,25 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-[#1E3A8A]" />
-            <h1 className="text-2xl font-bold text-[#1E3A8A]">GeoSafe Admin</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push("/admin/test")}
-              className="text-[#1E3A8A] border-[#1E3A8A] hover:bg-[#1E3A8A] hover:text-white"
-            >
-              Test Encryption
-            </Button>
-            <span className="text-sm text-gray-600">Welcome, {session.user?.name}</span>
-            <Button variant="outline" onClick={() => router.push("/api/auth/signout")}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h2>
+      <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+        <div className="mb-6 lg:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h2>
           <p className="text-gray-600">Manage users, safe zones, and files</p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="zones">Safe Zones</TabsTrigger>
-            <TabsTrigger value="files">Files</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-4 lg:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+            <TabsTrigger value="zones" className="text-xs sm:text-sm">Safe Zones</TabsTrigger>
+            <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
+          <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -253,18 +255,76 @@ export default function AdminDashboard() {
           <TabsContent value="users" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Manage user accounts and permissions
-                </CardDescription>
+                <div>
+                  <CardTitle>User Management</CardTitle>
+                  <CardDescription>
+                    Manage user accounts and permissions
+                  </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-sm text-gray-600">No users found</p>
-                  <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
-                    Add User
-                  </Button>
-                </div>
+                {loading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No users found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>File Access</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={user.role === "ADMIN" ? "default" : "secondary"}
+                                className={user.role === "ADMIN" ? "bg-[#1E3A8A] text-white" : ""}
+                              >
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{user._count.fileAccess} files</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <EditUserDialog user={user} onUserUpdated={fetchData} />
+                                {user.id !== session?.user?.id && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteUser(user.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -292,18 +352,19 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Radius</TableHead>
-                          <TableHead>Files</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Radius</TableHead>
+                            <TableHead>Files</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                         {safeZones.map((zone) => (
                           <TableRow key={zone.id}>
                             <TableCell className="font-medium">{zone.name}</TableCell>
@@ -329,8 +390,9 @@ export default function AdminDashboard() {
                             </TableCell>
                           </TableRow>
                         ))}
-                      </TableBody>
-                    </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -360,17 +422,18 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>File Name</TableHead>
-                          <TableHead>Safe Zone</TableHead>
-                          <TableHead>Size</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Uploaded</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>File Name</TableHead>
+                            <TableHead>Safe Zone</TableHead>
+                            <TableHead>Size</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Uploaded</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                         {files.map((file) => (
                           <TableRow key={file.id}>
                             <TableCell className="font-medium">{file.originalName}</TableCell>
@@ -384,8 +447,9 @@ export default function AdminDashboard() {
                             </TableCell>
                           </TableRow>
                         ))}
-                      </TableBody>
-                    </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>
