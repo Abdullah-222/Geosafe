@@ -80,9 +80,6 @@ export default function Navbar() {
                 <Link href="/admin" className="text-sm font-medium text-gray-700 hover:text-[#1E3A8A]">
                   Dashboard
                 </Link>
-                <Link href="/admin/test" className="text-sm font-medium text-gray-700 hover:text-[#1E3A8A]">
-                  Test Encryption
-                </Link>
               </>
             ) : (
               <Link href="/user" className="text-sm font-medium text-gray-700 hover:text-[#1E3A8A]">
@@ -151,13 +148,6 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
-                  </Link>
-                  <Link 
-                    href="/admin/test" 
-                    className="text-sm font-medium text-gray-700 hover:text-[#1E3A8A]"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Test Encryption
                   </Link>
                 </>
               ) : (
