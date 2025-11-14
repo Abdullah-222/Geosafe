@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -14,17 +13,16 @@ import { Shield, Upload, Download, FileText, CheckCircle, XCircle, AlertCircle }
 interface TestResult {
   success: boolean;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export default function EncryptionTestPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [testFile, setTestFile] = useState<File | null>(null);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isTesting, setIsTesting] = useState(false);
   const [testText, setTestText] = useState("This is a test file for encryption verification.");
-  const [databaseStats, setDatabaseStats] = useState<any>(null);
+  const [databaseStats, setDatabaseStats] = useState<{ stats: { totalFiles: number; encryptedFiles: number; unencryptedFiles: number; totalSize: number }; files: Array<{ id: string; name: string; safeZone: string; size: number; isEncrypted: boolean; isBase64?: boolean; encryptedDataPreview?: string }> } | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   if (status === "loading") {
@@ -38,12 +36,12 @@ export default function EncryptionTestPage() {
     );
   }
 
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
     router.push("/auth/signin");
     return null;
   }
 
-  const addTestResult = (success: boolean, message: string, details?: any) => {
+  const addTestResult = (success: boolean, message: string, details?: Record<string, unknown>) => {
     setTestResults(prev => [...prev, { success, message, details }]);
   };
 
@@ -114,7 +112,7 @@ export default function EncryptionTestPage() {
       }
 
     } catch (error) {
-      addTestResult(false, `Test failed with error: ${error instanceof Error ? error.message : 'Unknown error'}`, error);
+      addTestResult(false, `Test failed with error: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? { message: error.message, stack: error.stack } : { error: String(error) });
     } finally {
       setIsTesting(false);
     }
@@ -153,7 +151,7 @@ export default function EncryptionTestPage() {
       }
 
     } catch (error) {
-      addTestResult(false, `Direct test failed with error: ${error instanceof Error ? error.message : 'Unknown error'}`, error);
+      addTestResult(false, `Direct test failed with error: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? { message: error.message, stack: error.stack } : { error: String(error) });
     } finally {
       setIsTesting(false);
     }
@@ -383,7 +381,7 @@ export default function EncryptionTestPage() {
                   <div className="space-y-2">
                     <h4 className="font-semibold">File Details</h4>
                     <div className="max-h-60 overflow-y-auto space-y-2">
-                      {databaseStats.files.map((file: any) => (
+                      {databaseStats.files.map((file) => (
                         <div key={file.id} className="p-3 border rounded-lg">
                           <div className="flex items-center justify-between">
                             <div>
@@ -417,7 +415,7 @@ export default function EncryptionTestPage() {
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Download className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>Click "Check Database" to inspect files</p>
+                <p>Click &quot;Check Database&quot; to inspect files</p>
               </div>
             )}
           </CardContent>

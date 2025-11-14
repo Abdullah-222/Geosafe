@@ -1,7 +1,6 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,13 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Shield, User, LogOut, Menu, X } from "lucide-react";
+import { Shield, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = () => {
@@ -68,14 +66,14 @@ export default function Navbar() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href={session.user?.role === "ADMIN" ? "/admin" : "/user"} className="flex items-center space-x-2">
+          <Link href={(session.user as { role?: string })?.role === "ADMIN" ? "/admin" : "/user"} className="flex items-center space-x-2">
             <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-[#1E3A8A]" />
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E3A8A]">GeoSafe</h1>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            {session.user?.role === "ADMIN" ? (
+            {(session.user as { role?: string })?.role === "ADMIN" ? (
               <>
                 <Link href="/admin" className="text-sm font-medium text-gray-700 hover:text-[#1E3A8A]">
                   Dashboard
@@ -106,7 +104,7 @@ export default function Navbar() {
                       {session.user?.email}
                     </p>
                     <p className="text-xs text-[#1E3A8A] font-medium">
-                      {session.user?.role}
+                      {(session.user as { role?: string })?.role}
                     </p>
                   </div>
                 </div>
@@ -140,7 +138,7 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t pt-4">
             <div className="flex flex-col space-y-4">
-              {session.user?.role === "ADMIN" ? (
+              {(session.user as { role?: string })?.role === "ADMIN" ? (
                 <>
                   <Link 
                     href="/admin" 
@@ -169,7 +167,7 @@ export default function Navbar() {
                 <div className="flex-1">
                   <p className="text-sm font-medium">{session.user?.name}</p>
                   <p className="text-xs text-gray-500">{session.user?.email}</p>
-                  <p className="text-xs text-[#1E3A8A] font-medium">{session.user?.role}</p>
+                  <p className="text-xs text-[#1E3A8A] font-medium">{(session.user as { role?: string })?.role}</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />

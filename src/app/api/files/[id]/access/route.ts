@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+// @ts-expect-error - getServerSession exists but types may not be properly exported
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -55,7 +56,7 @@ export async function POST(
     // Log access attempt
     await prisma.fileAccess.create({
       data: {
-        userId: session.user.id,
+        userId: (session.user as { id?: string })?.id || "",
         fileId: file.id,
         latitude,
         longitude,
@@ -76,8 +77,8 @@ export async function POST(
     // Decrypt file
     const decryptedBuffer = decryptFile(file.encryptedData);
 
-    // Return file data
-    return new NextResponse(decryptedBuffer, {
+    // Return file data - convert Buffer to ArrayBuffer for NextResponse
+    return new NextResponse(new Uint8Array(decryptedBuffer), {
       headers: {
         'Content-Type': file.mimeType,
         'Content-Disposition': `attachment; filename="${file.originalName}"`,

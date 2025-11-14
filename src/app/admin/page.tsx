@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, Upload, Shield, Trash2, Edit } from "lucide-react";
-import Link from "next/link";
+import { Users, MapPin, Upload, Shield, Trash2 } from "lucide-react";
 import CreateSafeZoneDialog from "@/components/admin/CreateSafeZoneDialog";
 import FileUploadDialog from "@/components/admin/FileUploadDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
@@ -72,7 +71,7 @@ export default function AdminDashboard() {
       return;
     }
     
-    if (session.user?.role !== "ADMIN") {
+    if ((session.user as { role?: string })?.role !== "ADMIN") {
       router.push("/user");
       return;
     }
@@ -142,6 +141,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteFile = async (fileId: string) => {
+    if (!confirm("Are you sure you want to delete this file? This action cannot be undone.")) return;
+    
+    try {
+      const response = await fetch(`/api/files/${fileId}`, {
+        method: "DELETE",
+      });
+      
+      if (response.ok) {
+        setFiles(files.filter(file => file.id !== fileId));
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to delete file");
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Failed to delete file");
+    }
+  };
+
 
   if (status === "loading") {
     return (
@@ -154,7 +173,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
     return null;
   }
 
@@ -306,7 +325,7 @@ export default function AdminDashboard() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <EditUserDialog user={user} onUserUpdated={fetchData} />
-                                {user.id !== session?.user?.id && (
+                                {user.id !== (session?.user as { id?: string })?.id && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -431,6 +450,7 @@ export default function AdminDashboard() {
                             <TableHead>Size</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Uploaded</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -444,6 +464,16 @@ export default function AdminDashboard() {
                             <TableCell>{file.mimeType}</TableCell>
                             <TableCell>
                               {new Date(file.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteFile(file.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}

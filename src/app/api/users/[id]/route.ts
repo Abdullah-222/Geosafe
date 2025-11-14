@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+// @ts-expect-error - getServerSession exists but types may not be properly exported
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 export async function PUT(
@@ -11,17 +13,22 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { name, email, password, role } = await request.json();
     const { id } = await params;
 
-    const updateData: any = {
+    const updateData: {
+      name?: string;
+      email?: string;
+      role?: Role;
+      password?: string;
+    } = {
       name,
       email,
-      role
+      role: role as Role | undefined
     };
 
     // Only update password if provided
@@ -58,14 +65,14 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
 
     // Prevent admin from deleting themselves
-    if (id === session.user.id) {
+    if (id === (session.user as { id?: string })?.id) {
       return NextResponse.json(
         { message: "Cannot delete your own account" },
         { status: 400 }

@@ -1,11 +1,14 @@
-import { NextAuthOptions } from "next-auth"
+// @ts-expect-error - NextAuthOptions exists but types may not be properly exported
+import type { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import type { Adapter } from "next-auth/adapters"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  secret: process.env.NEXTAUTH_SECRET,
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -21,8 +24,15 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            role: true
           }
-        }) as any
+        })
 
         if (!user || !user.password) {
           return null
@@ -47,16 +57,19 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   callbacks: {
-    async jwt({ token, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
       if (user) {
+        token.id = user.id
         token.role = user.role
       }
       return token
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
       if (token && session.user) {
-        session.user.id = token.sub!
-        session.user.role = token.role
+        session.user.id = token.id || token.sub || ""
+        session.user.role = token.role || ""
       }
       return session
     }

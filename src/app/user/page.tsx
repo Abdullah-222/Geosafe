@@ -28,7 +28,7 @@ export default function UserDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationError] = useState<string | null>(null);
   const [accessibleFiles, setAccessibleFiles] = useState<AccessibleFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastLocationCheck, setLastLocationCheck] = useState<{ lat: number; lng: number } | null>(null);
@@ -42,7 +42,7 @@ export default function UserDashboard() {
       return;
     }
     
-    if (session.user?.role === "ADMIN") {
+    if ((session.user as { role?: string })?.role === "ADMIN") {
       router.push("/admin");
       return;
     }
@@ -154,7 +154,7 @@ export default function UserDashboard() {
     );
   }
 
-  if (!session || session.user?.role === "ADMIN") {
+  if (!session || (session.user as { role?: string })?.role === "ADMIN") {
     return null;
   }
 
@@ -166,7 +166,7 @@ export default function UserDashboard() {
       <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-6 lg:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Your Files</h2>
-          <p className="text-gray-600">Access your files when you're in a safe zone</p>
+          <p className="text-gray-600">Access your files when you&apos;re in a safe zone</p>
         </div>
 
         {/* Location Status */}
@@ -298,7 +298,7 @@ export default function UserDashboard() {
                 <div className="h-80 sm:h-96">
                   <MapWrapper 
                     safeZones={[]} // We'll need to fetch safe zones for display
-                    userLocation={userLocation}
+                    userLocation={userLocation || undefined}
                     showCurrentLocation={false} // Disable auto-location detection
                     onLocationDetected={(lat, lng) => {
                       setUserLocation({ lat, lng });
